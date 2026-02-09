@@ -47,6 +47,20 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        chart: {
+          positive: "hsl(var(--chart-positive))",
+          negative: "hsl(var(--chart-negative))",
+          warning: "hsl(var(--chart-warning))",
+          info: "hsl(var(--chart-info))",
+          neutral: "hsl(var(--chart-neutral))",
+        },
+        score: {
+          excellent: "hsl(var(--score-excellent))",
+          good: "hsl(var(--score-good))",
+          average: "hsl(var(--score-average))",
+          poor: "hsl(var(--score-poor))",
+          bad: "hsl(var(--score-bad))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
