@@ -2,3 +2,6 @@ project_id = "cslumjyomkyhqzscspwc"
 
 [functions.fund-chat]
 verify_jwt = false
+
+[functions.market-data]
+verify_jwt = false
