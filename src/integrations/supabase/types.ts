@@ -59,6 +59,42 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_items: {
+        Row: {
+          buy_price: number
+          created_at: string
+          id: string
+          item_id: string
+          item_name: string
+          item_type: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          buy_price: number
+          created_at?: string
+          id?: string
+          item_id: string
+          item_name: string
+          item_type: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          buy_price?: number
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_name?: string
+          item_type?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

@@ -5,6 +5,7 @@ import ScoreCards from "@/components/ScoreCards";
 import FundComparisonTable from "@/components/FundComparisonTable";
 import ChatBot from "@/components/ChatBot";
 import Nifty50Stocks from "@/components/Nifty50Stocks";
+import PortfolioTracker from "@/components/PortfolioTracker";
 
 
 const Index = () => {
@@ -14,6 +15,7 @@ const Index = () => {
       <MarketTicker />
       <HeroSection />
       <ScoreCards />
+      <PortfolioTracker />
       <Nifty50Stocks />
       <FundComparisonTable />
       <ChatBot />

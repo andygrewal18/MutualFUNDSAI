@@ -9,7 +9,7 @@ import {
 import { Fund, getRiskColor, getScoreColor, getScoreLabel } from "@/data/fundData";
 import InvestmentScoreRing from "./InvestmentScoreRing";
 import SIPCalculator from "./SIPCalculator";
-import { TrendingUp, Shield, BarChart3, Info, Wallet, PieChart } from "lucide-react";
+import { TrendingUp, Shield, BarChart3, Info, Wallet, PieChart, Briefcase } from "lucide-react";
 import {
     AreaChart,
     Area,
@@ -19,6 +19,9 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePortfolio } from "@/hooks/usePortfolio";
+import { toast } from "sonner";
 
 function generateFundHistory(returns1Y: number, returns3Y: number, returns5Y: number) {
     const data: { year: string; value: number }[] = [];
@@ -44,6 +47,8 @@ interface FundDetailModalProps {
 }
 
 const FundDetailModal = ({ fund, isOpen, onClose }: FundDetailModalProps) => {
+    const { user } = useAuth();
+    const { addItem } = usePortfolio();
     const chartData = useMemo(
         () => fund ? generateFundHistory(fund.returns1Y, fund.returns3Y, fund.returns5Y) : [],
         [fund?.id]
@@ -177,6 +182,17 @@ const FundDetailModal = ({ fund, isOpen, onClose }: FundDetailModalProps) => {
                         </div>
                     </div>
                 </div>
+                {user && (
+                    <button
+                        onClick={async () => {
+                            await addItem({ item_type: "fund", item_id: fund.id, item_name: fund.name, quantity: 1, buy_price: fund.nav });
+                            toast.success(`${fund.name} added to portfolio`);
+                        }}
+                        className="mt-4 w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <Briefcase className="w-4 h-4" /> Add to Portfolio
+                    </button>
+                )}
             </DialogContent>
         </Dialog>
     );

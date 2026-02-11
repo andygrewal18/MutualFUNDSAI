@@ -7,7 +7,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Stock } from "@/data/stockData";
-import { TrendingUp, TrendingDown, BarChart3, Building2 } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, Building2, Briefcase } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePortfolio } from "@/hooks/usePortfolio";
+import { toast } from "sonner";
 import {
   AreaChart,
   Area,
@@ -56,7 +59,8 @@ const PERIODS = [
 
 const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => {
   const [period, setPeriod] = useState("1M");
-  
+  const { user } = useAuth();
+  const { addItem } = usePortfolio();
   const days = PERIODS.find((p) => p.label === period)?.days ?? 30;
   const chartData = useMemo(
     () => stock ? generatePriceHistory(stock.price, stock.changePercent, days) : [],
@@ -184,6 +188,17 @@ const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => 
             <p className="text-sm font-semibold">{stock.sector}</p>
           </div>
         </div>
+        {user && (
+          <button
+            onClick={async () => {
+              await addItem({ item_type: "stock", item_id: stock.id, item_name: stock.name, quantity: 1, buy_price: stock.price });
+              toast.success(`${stock.symbol} added to portfolio`);
+            }}
+            className="mt-4 w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+          >
+            <Briefcase className="w-4 h-4" /> Add to Portfolio
+          </button>
+        )}
       </DialogContent>
     </Dialog>
   );
