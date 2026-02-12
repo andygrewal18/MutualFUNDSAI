@@ -10,6 +10,7 @@ import { Stock } from "@/data/stockData";
 import { TrendingUp, TrendingDown, BarChart3, Building2, Briefcase } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { useLivePrices } from "@/contexts/LivePricesContext";
 import { toast } from "sonner";
 import {
   AreaChart,
@@ -61,15 +62,23 @@ const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => 
   const [period, setPeriod] = useState("1M");
   const { user } = useAuth();
   const { addItem } = usePortfolio();
+  const { stockPrices } = useLivePrices();
+
+  // Use live price if available
+  const liveData = stock ? stockPrices[stock.id] : undefined;
+  const price = liveData?.price ?? stock?.price ?? 0;
+  const change = liveData?.change ?? stock?.change ?? 0;
+  const changePercent = liveData?.changePercent ?? stock?.changePercent ?? 0;
+
   const days = PERIODS.find((p) => p.label === period)?.days ?? 30;
   const chartData = useMemo(
-    () => stock ? generatePriceHistory(stock.price, stock.changePercent, days) : [],
-    [stock?.symbol, stock?.price, days]
+    () => stock ? generatePriceHistory(price, changePercent, days) : [],
+    [stock?.symbol, price, days]
   );
 
   if (!stock) return null;
 
-  const isPositive = stock.changePercent >= 0;
+  const isPositive = changePercent >= 0;
   const chartColor = isPositive ? "hsl(160, 60%, 45%)" : "hsl(0, 72%, 51%)";
 
   return (
@@ -87,7 +96,7 @@ const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => 
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl font-mono font-bold text-foreground">
-                ₹{stock.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                ₹{price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
               <span
                 className={`flex items-center gap-1 text-sm font-mono font-bold ${
@@ -96,7 +105,7 @@ const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => 
               >
                 {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {isPositive ? "+" : ""}
-                {stock.changePercent}%
+                {changePercent}%
               </span>
             </div>
           </div>
@@ -172,13 +181,13 @@ const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => 
               <BarChart3 className="w-3 h-3" /> Price
             </p>
             <p className="text-sm font-mono font-bold">
-              ₹{stock.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              ₹{price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-secondary/10 border border-border/30 text-center">
             <p className="text-[10px] text-muted-foreground mb-1">Change</p>
             <p className={`text-sm font-mono font-bold ${isPositive ? "text-chart-positive" : "text-chart-negative"}`}>
-              {isPositive ? "+" : ""}₹{stock.change.toFixed(2)}
+              {isPositive ? "+" : ""}₹{change.toFixed(2)}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-secondary/10 border border-border/30 text-center">
@@ -191,7 +200,7 @@ const StockDetailModal = ({ stock, isOpen, onClose }: StockDetailModalProps) => 
         {user && (
           <button
             onClick={async () => {
-              await addItem({ item_type: "stock", item_id: stock.id, item_name: stock.name, quantity: 1, buy_price: stock.price });
+              await addItem({ item_type: "stock", item_id: stock.id, item_name: stock.name, quantity: 1, buy_price: price });
               toast.success(`${stock.symbol} added to portfolio`);
             }}
             className="mt-4 w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"

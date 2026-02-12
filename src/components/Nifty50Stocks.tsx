@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { nifty50Stocks, Stock } from "@/data/stockData";
-import { ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, TrendingDown, Maximize2 } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, TrendingUp, TrendingDown, Maximize2, RefreshCw } from "lucide-react";
 import StockDetailModal from "./StockDetailModal";
+import { useLivePrices } from "@/contexts/LivePricesContext";
 
 type SortKey = keyof Stock;
 type SortDir = "asc" | "desc";
@@ -11,8 +12,16 @@ const Nifty50Stocks = () => {
     const [sortDir, setSortDir] = useState<SortDir>("desc");
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { stockPrices, stocksLoading, lastStockUpdate } = useLivePrices();
 
-    const sorted = [...nifty50Stocks].sort((a, b) => {
+    // Merge live prices with static data
+    const liveStocks = useMemo(() => nifty50Stocks.map((s) => {
+      const live = stockPrices[s.id];
+      if (live) return { ...s, price: live.price, change: live.change, changePercent: live.changePercent };
+      return s;
+    }), [stockPrices]);
+
+    const sorted = [...liveStocks].sort((a, b) => {
         const aVal = a[sortKey];
         const bVal = b[sortKey];
         if (typeof aVal === "number" && typeof bVal === "number") {
@@ -51,8 +60,13 @@ const Nifty50Stocks = () => {
             <div className="container mx-auto">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold">Nifty 50 Stocks</h2>
-                        <p className="text-sm text-muted-foreground mt-1">Click any stock to view its price chart</p>
+                        <h2 className="text-2xl font-bold flex items-center gap-2">
+                            Nifty 50 Stocks
+                            {stocksLoading && <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />}
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Live prices • {lastStockUpdate ? `Updated ${lastStockUpdate}` : "Click any stock to view its price chart"}
+                        </p>
                     </div>
                 </div>
 
@@ -80,7 +94,7 @@ const Nifty50Stocks = () => {
                                         key={stock.id}
                                         className="border-b border-border/50 hover:bg-secondary/30 transition-colors animate-fade-in group cursor-pointer"
                                         style={{ animationDelay: `${i * 50}ms` }}
-                                        onClick={() => { setSelectedStock(stock); setIsModalOpen(true); }}
+                                        onClick={() => { setSelectedStock(liveStocks.find(s => s.id === stock.id) ?? stock); setIsModalOpen(true); }}
                                     >
                                         <td className="px-4 py-4">
                                             <span className="font-bold text-primary">{stock.symbol}</span>
