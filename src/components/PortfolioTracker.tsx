@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio, PortfolioItem } from "@/hooks/usePortfolio";
+import { useLivePrices } from "@/contexts/LivePricesContext";
 import { nifty50Stocks } from "@/data/stockData";
 import { fundsData } from "@/data/fundData";
 import { Trash2, Plus, TrendingUp, TrendingDown, Briefcase, PieChart, IndianRupee, ChevronDown } from "lucide-react";
@@ -14,11 +15,15 @@ const COLORS = [
   "hsl(330, 60%, 50%)", "hsl(190, 70%, 45%)",
 ];
 
-function getCurrentPrice(item: PortfolioItem): number {
+function getCurrentPrice(item: PortfolioItem, stockPrices: Record<string, { price: number }>, fundNavs: Record<string, number>): number {
   if (item.item_type === "stock") {
+    const live = stockPrices[item.item_id];
+    if (live) return live.price;
     const stock = nifty50Stocks.find((s) => s.id === item.item_id);
     return stock?.price ?? item.buy_price;
   }
+  const liveNav = fundNavs[item.item_id];
+  if (liveNav) return liveNav;
   const fund = fundsData.find((f) => f.id === item.item_id);
   return fund?.nav ?? item.buy_price;
 }
@@ -26,6 +31,7 @@ function getCurrentPrice(item: PortfolioItem): number {
 const PortfolioTracker = () => {
   const { user } = useAuth();
   const { items, loading, addItem, removeItem } = usePortfolio();
+  const { stockPrices, fundNavs } = useLivePrices();
   const [showAddForm, setShowAddForm] = useState(false);
   const [addType, setAddType] = useState<"stock" | "fund">("stock");
   const [selectedId, setSelectedId] = useState("");
@@ -45,13 +51,13 @@ const PortfolioTracker = () => {
   }
 
   const totalInvested = items.reduce((sum, i) => sum + i.buy_price * i.quantity, 0);
-  const totalCurrent = items.reduce((sum, i) => sum + getCurrentPrice(i) * i.quantity, 0);
+  const totalCurrent = items.reduce((sum, i) => sum + getCurrentPrice(i, stockPrices, fundNavs) * i.quantity, 0);
   const totalPnL = totalCurrent - totalInvested;
   const totalPnLPercent = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
 
   const pieData = items.map((i) => ({
     name: i.item_name.length > 15 ? i.item_name.slice(0, 15) + "…" : i.item_name,
-    value: getCurrentPrice(i) * i.quantity,
+    value: getCurrentPrice(i, stockPrices, fundNavs) * i.quantity,
   }));
 
   const availableStocks = nifty50Stocks.filter((s) => !items.some((i) => i.item_id === s.id && i.item_type === "stock"));
@@ -258,7 +264,7 @@ const PortfolioTracker = () => {
                   </thead>
                   <tbody>
                     {items.map((item, i) => {
-                      const current = getCurrentPrice(item);
+                      const current = getCurrentPrice(item, stockPrices, fundNavs);
                       const pnl = (current - item.buy_price) * item.quantity;
                       const pnlPct = ((current - item.buy_price) / item.buy_price) * 100;
                       return (

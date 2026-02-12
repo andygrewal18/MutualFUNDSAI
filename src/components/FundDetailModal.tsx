@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { toast } from "sonner";
+import { useLivePrices } from "@/contexts/LivePricesContext";
 
 function generateFundHistory(returns1Y: number, returns3Y: number, returns5Y: number) {
     const data: { year: string; value: number }[] = [];
@@ -49,11 +50,13 @@ interface FundDetailModalProps {
 const FundDetailModal = ({ fund, isOpen, onClose }: FundDetailModalProps) => {
     const { user } = useAuth();
     const { addItem } = usePortfolio();
+    const { fundNavs } = useLivePrices();
     const chartData = useMemo(
         () => fund ? generateFundHistory(fund.returns1Y, fund.returns3Y, fund.returns5Y) : [],
         [fund?.id]
     );
     if (!fund) return null;
+    const liveNav = fundNavs[fund.id] ?? fund.nav;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -86,7 +89,7 @@ const FundDetailModal = ({ fund, isOpen, onClose }: FundDetailModalProps) => {
                                 <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                     <BarChart3 className="w-3 h-3" /> NAV
                                 </p>
-                                <p className="text-xl font-mono font-bold">₹{fund.nav.toLocaleString("en-IN")}</p>
+                                <p className="text-xl font-mono font-bold">₹{liveNav.toLocaleString("en-IN")}</p>
                             </div>
                             <div className="p-4 rounded-xl bg-secondary/10 border border-border/30">
                                 <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -185,7 +188,7 @@ const FundDetailModal = ({ fund, isOpen, onClose }: FundDetailModalProps) => {
                 {user && (
                     <button
                         onClick={async () => {
-                            await addItem({ item_type: "fund", item_id: fund.id, item_name: fund.name, quantity: 1, buy_price: fund.nav });
+                            await addItem({ item_type: "fund", item_id: fund.id, item_name: fund.name, quantity: 1, buy_price: liveNav });
                             toast.success(`${fund.name} added to portfolio`);
                         }}
                         className="mt-4 w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
